@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>수업·과제 플래너</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3F5F8; --surface:#FFFFFF; --ink:#1B2440; --sub:#5E6880; --line:#DDE1E8;
+  --accent:#2B4C9B; --accent-soft:#E6ECF8;
+  --urgent:#C93636; --urgent-soft:#FBE9E8;
+  --doing:#A86E05; --doing-soft:#FBF1DC;
+  --done:#2E7D52; --done-soft:#E3F2E9;
+  --on:#2B6CB0; --on-soft:#E3EEF9;
+  --off:#6A4BB5; --off-soft:#EEE8F8;
+  --exam:#9C4A1A; --exam-soft:#F1D3BC;
+  --rest:#7A8296; --rest-soft:#E9EBF0;
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#12161F; --surface:#1A2030; --ink:#E7EAF2; --sub:#9AA3B8; --line:#2C3447;
+    --accent:#93ACEB; --accent-soft:#232D47;
+    --urgent:#F27A7A; --urgent-soft:#3A2226;
+    --doing:#E5B455; --doing-soft:#3A3020;
+    --done:#6CC495; --done-soft:#1D3528;
+    --on:#7FB2EC; --on-soft:#1E2E44;
+    --off:#B59DEB; --off-soft:#2D2544;
+    --exam:#F0A36E; --exam-soft:#45301F;
+    --rest:#9AA3B8; --rest-soft:#262D3D;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12161F; --surface:#1A2030; --ink:#E7EAF2; --sub:#9AA3B8; --line:#2C3447;
+  --accent:#93ACEB; --accent-soft:#232D47;
+  --urgent:#F27A7A; --urgent-soft:#3A2226;
+  --doing:#E5B455; --doing-soft:#3A3020;
+  --done:#6CC495; --done-soft:#1D3528;
+  --on:#7FB2EC; --on-soft:#1E2E44;
+  --off:#B59DEB; --off-soft:#2D2544;
+  --exam:#F0A36E; --exam-soft:#45301F;
+  --rest:#9AA3B8; --rest-soft:#262D3D;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans KR",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* 메뉴바 */
+.appbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border-bottom:1px solid var(--line)}
+.appbar-in,.tabs{max-width:900px;margin:0 auto}
+.appbar-in{padding:12px 20px 2px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:var(--accent);font-size:1.15rem}
+.brand b{display:block;font-size:1.05rem;line-height:1.3;letter-spacing:-.01em}
+.brand small{display:block;font-size:.8rem;color:var(--sub)}
+.today{font-size:.88rem;color:var(--sub)}
+.tabs{padding:0 10px;display:flex;gap:2px;overflow-x:auto}
+.tabs a{padding:10px 14px 9px;color:var(--sub);text-decoration:none;font-weight:500;border-bottom:3px solid transparent;white-space:nowrap}
+.tabs a:hover{color:var(--ink)}
+.tabs a[aria-current="page"]{color:var(--accent);border-bottom-color:var(--accent);font-weight:700}
+
+.wrap{max-width:900px;margin:0 auto;padding:24px 20px 72px}
+.view-title{font-size:1.35rem;font-weight:700;margin:0 0 14px;letter-spacing:-.01em}
+
+/* 소개 */
+.intro{display:flex;justify-content:space-between;align-items:flex-end;gap:16px 24px;flex-wrap:wrap;margin:4px 2px 20px}
+.intro h1{font-size:1.55rem;line-height:1.35;font-weight:700;letter-spacing:-.02em;margin:0 0 6px;max-width:26ch}
+.intro p{margin:0;color:var(--sub);max-width:56ch}
+.btn-ghost{display:inline-block;border:1.5px solid var(--accent);color:var(--accent);border-radius:10px;padding:8px 16px;font-weight:600;text-decoration:none;white-space:nowrap;background:none}
+.btn-ghost:hover{background:var(--accent-soft)}
+
+/* 홈 대시보드 */
+.dash{display:grid;grid-template-columns:1.15fr 1fr;gap:14px;margin-bottom:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px}
+.panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.panel-head h2{font-size:1rem;font-weight:600;margin:0}
+.panel-head a{font-size:.88rem;color:var(--accent);font-weight:600;text-decoration:none}
+
+.next-mode{display:inline-block;font-size:1.45rem;font-weight:700;padding:3px 16px;border-radius:12px;margin-bottom:12px}
+.m-online.next-mode{background:var(--on-soft);color:var(--on)}
+.m-offline.next-mode{background:var(--off-soft);color:var(--off)}
+.m-exam.next-mode{background:var(--exam-soft);color:var(--exam);font-size:1.2rem}
+.next ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.next li b{font-weight:600;display:block;font-size:.88rem;color:var(--sub)}
+.next li span{font-weight:600}
+.next li small{color:var(--sub);font-size:.88rem;margin-left:4px}
+.next-after{margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line);font-size:.88rem;color:var(--sub)}
+
+.summary{margin:0 0 12px;font-size:.95rem}
+.summary strong{font-weight:600}
+.soon{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.soon a{display:grid;grid-template-columns:58px 1fr;gap:10px;align-items:center;padding:10px;border-radius:10px;background:var(--bg);color:inherit;text-decoration:none}
+.soon a:hover{background:var(--accent-soft)}
+.soon .urgent .dday{color:var(--urgent)}
+.soon .c{display:block;font-size:.78rem;color:var(--sub);line-height:1.4}
+.soon .t{display:block;font-weight:600;line-height:1.4}
+
+/* 주차 칸 */
+.legend{display:flex;gap:12px;font-size:.8rem;color:var(--sub);flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px}
+.weeks{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.wk{border:none;text-align:left;border-radius:10px;padding:8px 10px;line-height:1.35;font:inherit}
+button.wk:hover{filter:brightness(.96)}
+.wk.m-offline{background:var(--off-soft);color:var(--off)}
+.wk.m-online{background:var(--on-soft);color:var(--on)}
+.wk.m-rest{background:var(--rest-soft);color:var(--rest)}
+.wk.m-exam{background:var(--exam-soft);color:var(--exam);grid-column:span 2}
+.wk.m-mid{background:var(--exam-soft);color:var(--exam);grid-column:span 2}
+.wk .n{display:block;font-size:.72rem}
+.wk .d{display:block;font-size:.82rem;color:var(--ink)}
+.wk .m{display:block;font-weight:700;font-size:.95rem}
+.wk .chg{font-weight:700}
+.wk.past{opacity:.42}
+.wk.now{outline:2px solid var(--accent);outline-offset:1px}
+.wk.now .n{font-weight:700;color:var(--accent)}
+.weeks-note{margin:12px 0 0;font-size:.86rem;color:var(--sub)}
+
+/* 과목 카드 */
+.courses{display:grid;gap:14px;margin-bottom:16px}
+.course{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 18px 12px}
+.c-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.c-head h3{margin:0;font-size:1.1rem;line-height:1.4}
+.prof{margin:2px 0 0;font-size:.88rem;color:var(--sub)}
+.mode{font-size:.8rem;font-weight:600;padding:4px 10px;border-radius:99px;white-space:nowrap}
+.mode.m-online{background:var(--on-soft);color:var(--on)}
+.mode.m-offline{background:var(--off-soft);color:var(--off)}
+.mode.m-exam{background:var(--exam-soft);color:var(--exam)}
+.mode.m-end{background:var(--bg);color:var(--sub)}
+.when{margin:10px 0 0;font-size:.95rem}
+.when b{font-weight:600}
+.when span{color:var(--sub);font-size:.88rem}
+.task-box{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.task-state{font-size:.85rem;font-weight:600;margin:0 0 8px}
+.task-state.has{color:var(--urgent)}.task-state.ok{color:var(--done)}.task-state.none{color:var(--sub);font-weight:500}
+ul.tasks{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+.task{display:grid;grid-template-columns:58px 1fr auto auto;gap:10px;align-items:center;padding:8px 10px;border-radius:9px;background:var(--bg)}
+.dday{text-align:center;font-weight:700;font-size:1rem;line-height:1.2}
+.dday small{display:block;font-size:.7rem;font-weight:500;color:var(--sub)}
+.task.urgent .dday{color:var(--urgent)}
+.task.s-done .dday{color:var(--done);font-size:.9rem}
+.tt{font-weight:600;font-size:.95rem;line-height:1.4}
+.task.s-done .tt{text-decoration:line-through;text-decoration-color:var(--sub);color:var(--sub)}
+.tm{font-size:.8rem;color:var(--sub)}
+.status-btn{border:none;border-radius:8px;padding:5px 10px;font-size:.82rem;font-weight:600;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.s-doing .status-btn{background:var(--doing-soft);color:var(--doing)}
+.s-done .status-btn{background:var(--done-soft);color:var(--done)}
+.del{border:none;background:none;font-size:.78rem;color:var(--sub);padding:2px 4px;white-space:nowrap}
+.del.confirm{color:var(--urgent);font-weight:600}
+.c-foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:10px;flex-wrap:wrap}
+.add-task summary{cursor:pointer;color:var(--accent);font-size:.88rem;font-weight:600;list-style:none}
+.add-task summary::-webkit-details-marker{display:none}
+.add-task[open]{flex-basis:100%}
+.mini{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;margin-top:10px;align-items:end}
+
+/* 폼 */
+details.box{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:12px}
+details.box>summary{list-style:none;padding:14px 18px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:10px}
+details.box>summary::-webkit-details-marker{display:none}
+.plus{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--surface);font-weight:700;line-height:1;transition:transform .2s}
+details.box[open] .plus{transform:rotate(45deg)}
+.setbox{background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:14px}
+.setbox h2{font-size:1.02rem;margin:0;padding:16px 18px 2px}
+.guide{background:var(--accent-soft);border-color:transparent}
+.guide ol{margin:0;padding:10px 18px 16px 40px;display:flex;flex-direction:column;gap:8px}
+.guide li b{display:block;font-weight:600}
+.guide li span{font-size:.88rem;color:var(--sub)}
+.setbox .desc{margin:0;padding:0 18px;font-size:.86rem;color:var(--sub)}
+.form{padding:12px 18px 18px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{display:flex;flex-direction:column;gap:5px;font-size:.85rem;color:var(--sub)}
+label.full{grid-column:1/-1}
+input,select{padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--bg);font-size:.95rem;min-width:0}
+input:focus,select:focus{border-color:var(--accent);outline:none}
+.form-foot{grid-column:1/-1;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.btn-main{background:var(--accent);color:var(--surface);border:none;border-radius:9px;padding:9px 18px;font-weight:600}
+.btn-line{background:none;border:1px solid var(--line);border-radius:9px;padding:9px 16px;font-weight:500}
+.btn-line.confirm{border-color:var(--urgent);color:var(--urgent);font-weight:600}
+.form-msg{font-size:.85rem;margin:0;color:var(--done)}
+.form-msg.err{color:var(--urgent)}
+.hint{grid-column:1/-1;margin:0;font-size:.82rem;color:var(--sub)}
+.empty{text-align:center;color:var(--sub);padding:24px 12px;border:1px dashed var(--line);border-radius:12px;list-style:none}
+
+footer{margin-top:28px;font-size:.85rem;color:var(--sub)}
+
+@media (max-width:720px){
+  .dash{grid-template-columns:1fr}
+  .intro h1{font-size:1.35rem}
+}
+@media (max-width:560px){
+  .today{display:none}
+  .form{grid-template-columns:1fr}
+  .mini{grid-template-columns:1fr 1fr}
+  .mini .tt-in{grid-column:1/-1}
+  .task{grid-template-columns:52px 1fr auto}
+  .task .del{grid-column:2/-1;justify-self:end}
+  .weeks{grid-template-columns:repeat(auto-fill,minmax(84px,1fr))}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="appbar">
+  <div class="appbar-in">
+    <div class="brand"><span class="logo" aria-hidden="true">📚</span><div><b>수업·과제 플래너</b><small id="semName"></small></div></div>
+    <span class="today" id="todayText"></span>
+  </div>
+  <nav class="tabs" aria-label="화면 메뉴">
+    <a href="#home" data-tab="home">홈</a>
+    <a href="#courses" data-tab="courses">과목·과제</a>
+    <a href="#setup" data-tab="setup">학기 설정</a>
+  </nav>
+</header>
+
+<main class="wrap">
+  <!-- 홈 -->
+  <section data-view="home">
+    <div class="intro">
+      <div>
+        <h1>격주로 바뀌는 수업 방식과 과제 마감을 한 화면에서</h1>
+        <p>개강일과 과목만 넣으면 매주 대면·온라인이 자동으로 계산돼요. 학기 날짜와 교시 시간을 바꾸면 다른 학기, 다른 학교에서도 그대로 쓸 수 있어요.</p>
+      </div>
+      <a class="btn-ghost" href="#setup">내 학기로 바꿔 쓰기</a>
+    </div>
+
+    <div class="dash">
+      <section class="panel next" id="next" aria-live="polite"></section>
+      <section class="panel">
+        <div class="panel-head"><h2>곧 마감되는 과제</h2><a href="#courses">과목별로 보기</a></div>
+        <p class="summary" id="summary"></p>
+        <ul class="soon" id="soon"></ul>
+      </section>
+    </div>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>한눈에 보는 수업 일정</h2>
+        <div class="legend"><span><i style="background:var(--off)"></i>대면</span><span><i style="background:var(--on)"></i>온라인</span><span><i style="background:var(--rest)"></i>휴강</span><span><i style="background:var(--exam)"></i>시험·보강</span></div>
+      </div>
+      <div class="weeks" id="weeks"></div>
+      <p class="weeks-note" id="weeksNote"></p>
+    </section>
+  </section>
+
+  <!-- 과목·과제 -->
+  <section data-view="courses" hidden>
+    <h1 class="view-title">과목·과제</h1>
+    <div class="courses" id="courses"></div>
+    <details class="box">
+      <summary><span class="plus">+</span>과목 추가하기</summary>
+      <form class="form" id="courseForm" novalidate>
+        <label>과목명<input name="name" placeholder="예: 프로젝트 관리론" autocomplete="off"></label>
+        <label>교수명<input name="prof" placeholder="예: 홍길동 교수" autocomplete="off"></label>
+        <label>요일
+          <select name="day"><option value="1">월요일</option><option value="2" selected>화요일</option><option value="3">수요일</option><option value="4">목요일</option><option value="5">금요일</option><option value="6">토요일</option></select>
+        </label>
+        <label>교시<select name="period" id="periodSelect"></select></label>
+        <p class="hint">대면·온라인은 학기 설정의 규칙에 따라 자동으로 표시돼요.</p>
+        <div class="form-foot"><button type="submit" class="btn-main">과목 추가</button><p class="form-msg" id="courseMsg" role="alert"></p></div>
+      </form>
+    </details>
+  </section>
+
+  <!-- 학기 설정 -->
+  <section data-view="setup" hidden>
+    <h1 class="view-title">학기 설정</h1>
+
+    <div class="setbox guide">
+      <h2>처음 쓰는 분은 이렇게 시작하세요</h2>
+      <ol>
+        <li><b>학기 날짜와 규칙 넣기</b><span>개강일, 마지막 수업일, 첫 주 수업 방식과 바뀌는 주기를 고르고 저장해요.</span></li>
+        <li><b>교시 시간 맞추기</b><span>학교 수업 시간과 다르면 아래에서 바꿔요.</span></li>
+        <li><b>과목과 과제 등록하기</b><span>맨 아래 ‘과목·과제 모두 지우기’로 예시를 비운 뒤, 과목·과제 탭에서 내 과목을 추가해요. 그러면 홈에 일정이 자동으로 나와요.</span></li>
+      </ol>
+    </div>
+
+    <div class="setbox">
+      <h2>학기 날짜와 수업 방식 규칙</h2>
+      <p class="desc">첫 주 수업 방식과 바뀌는 주기를 고르면, 학기 전체 일정이 자동으로 만들어져요.</p>
+      <form class="form" id="semForm" novalidate>
+        <label class="full">학기 이름<input name="name" autocomplete="off"></label>
+        <label>개강일<input name="start" type="date"></label>
+        <label>마지막 수업일<input name="last" type="date"></label>
+        <label>첫 주 수업 방식<select name="first"><option value="offline">대면</option><option value="online">온라인</option></select></label>
+        <label>바뀌는 주기<select name="alt"><option value="1">격주로 번갈아</option><option value="0">매주 같음</option></select></label>
+        <label>중간고사 시작<input name="midStart" type="date"></label>
+        <label>중간고사 끝<input name="midEnd" type="date"></label>
+        <label>보강·기말고사 시작<input name="examStart" type="date"></label>
+        <label>보강·기말고사 끝<input name="examEnd" type="date"></label>
+        <div class="form-foot"><button type="submit" class="btn-main">학기 저장</button><p class="form-msg" id="semMsg" role="alert"></p></div>
+      </form>
+    </div>
+
+    <div class="setbox">
+      <h2>교시 시간</h2>
+      <p class="desc">학교마다 다른 수업 시간을 맞출 수 있어요.</p>
+      <form class="form" id="periodForm" novalidate>
+        <label>1교시 시작<input name="s1" type="time"></label>
+        <label>1교시 끝<input name="e1" type="time"></label>
+        <label>2교시 시작<input name="s2" type="time"></label>
+        <label>2교시 끝<input name="e2" type="time"></label>
+        <div class="form-foot"><button type="submit" class="btn-main">교시 저장</button><p class="form-msg" id="periodMsg" role="alert"></p></div>
+      </form>
+    </div>
+
+    <div class="setbox">
+      <h2>처음부터 다시 쓰기</h2>
+      <p class="desc">다른 사람이 쓰거나 새 학기를 시작할 때 사용해요.</p>
+      <div class="form">
+        <div class="form-foot">
+          <button type="button" class="btn-line" id="resetAll">과목·과제 모두 지우기</button>
+          <button type="button" class="btn-line" id="resetSample">처음 예시로 되돌리기</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>지금은 이 브라우저에만 저장돼요. Supabase를 연결하면 휴대폰에서도 같은 내용을 볼 수 있어요.</footer>
+</main>
+
+<script>
+(function(){
+  var KEY='semester-planner-v11';
+  var DOW=['일','월','화','수','목','금','토'];
+  var MODE={online:'온라인',offline:'대면'};
+  var STATUS={todo:'시작 전',doing:'진행 중',done:'제출 완료'};
+  var NEXT={todo:'doing',doing:'done',done:'todo'};
+
+  function today(){var d=new Date();d.setHours(0,0,0,0);return d;}
+  function addDays(d,n){var x=new Date(d);x.setDate(x.getDate()+n);return x;}
+  function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  function parse(s){var p=s.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]);}
+  function diff(s){return Math.round((parse(s)-today())/86400000);}
+  function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function md(d){return (d.getMonth()+1)+'월 '+d.getDate()+'일';}
+  function fmt(d){return md(d)+' ('+DOW[d.getDay()]+')';}
+  function monday(d){var x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x;}
+  function mins(t){var p=t.split(':').map(Number);return p[0]*60+p[1];}
+  function other(m){return m==='offline'?'online':'offline';}
+
+  // 저장 담당: 나중에 이 부분만 Supabase로 바꾸면 됨
+  var store={
+    load:function(){try{var r=localStorage.getItem(KEY);return r?JSON.parse(r):null;}catch(e){return null;}},
+    save:function(d){try{localStorage.setItem(KEY,JSON.stringify(d));}catch(e){}}
+  };
+
+  function samples(){
+    var a=uid(),b=uid(),c=uid();
+    return {
+      semester:{name:'2026학년도 2학기',start:'2026-08-31',last:'2026-12-18',first:'offline',alt:true,midStart:'2026-10-19',midEnd:'2026-10-23',examStart:'2026-12-07',examEnd:'2026-12-18'},
+      periods:{1:{start:'19:00',end:'20:30'},2:{start:'20:30',end:'22:00'}},
+      overrides:{},
+      courses:[
+        {id:a,name:'프로젝트 관리론',prof:'김진호 교수',day:2,period:1},
+        {id:b,name:'AI 전환의 거버넌스',prof:'박동진 교수',day:3,period:1},
+        {id:c,name:'공직자를 위한 성과관리 실무 가이드라인',prof:'조홍남 교수',day:3,period:2}
+      ],
+      tasks:[
+        {id:uid(),courseId:b,title:'나에게 필요한 웹 만들기',due:'2026-11-25',method:'웹 주소 제출',status:'doing'},
+        {id:uid(),courseId:c,title:'과제물 이메일 제출 (12월 2일 공지)',due:'2026-12-02',method:'이메일',status:'todo'}
+      ]
+    };
+  }
+
+  var data=store.load()||samples();
+  if(!data.periods)data.periods=samples().periods;
+  if(!data.overrides)data.overrides={};
+  var pendingDelete=null,deleteTimer=null;
+  function save(){store.save(data);render();}
+  function sem(){return data.semester;}
+  function courseOf(id){return data.courses.find(function(c){return c.id===id;});}
+  function per(c){var p=data.periods[c.period]||{start:'',end:''};return {label:c.period+'교시',start:p.start,end:p.end};}
+
+  // 핵심 계산: 날짜만 보고 그 주의 수업 방식을 정함
+  function weekNo(d){return Math.round((monday(d)-monday(parse(sem().start)))/604800000);}
+  function wkKey(d){return iso(monday(d));}
+  function baseMode(d){var s=sem();if(!s.alt)return s.first;return weekNo(d)%2===0?s.first:other(s.first);}
+  function ov(d){return data.overrides[wkKey(d)];}
+  function modeOn(d){var o=ov(d);return (o==='offline'||o==='online')?o:baseMode(d);}
+  function inExam(d){var s=iso(d),m=sem();return !!(m.examStart&&m.examEnd&&s>=m.examStart&&s<=m.examEnd);}
+  function inMid(d){var s=iso(d),m=sem();return !!(m.midStart&&m.midEnd&&s>=m.midStart&&s<=m.midEnd);}
+  function inRange(d){var s=iso(d);return s>=sem().start&&s<=sem().last;}
+  function isClassDay(d){return inRange(d)&&!inExam(d)&&!inMid(d)&&ov(d)!=='off';}
+
+  function classesAfterNow(filterFn){
+    var now=new Date(),t=today(),nowMin=now.getHours()*60+now.getMinutes();
+    for(var i=0;i<200;i++){
+      var d=addDays(t,i);
+      if(!isClassDay(d))continue;
+      var list=data.courses.filter(function(c){return c.day===d.getDay()&&(!filterFn||filterFn(c))&&!(i===0&&per(c).end&&nowMin>=mins(per(c).end));});
+      if(list.length)return {date:d,list:list};
+    }
+    return null;
+  }
+  function nextWeek(){
+    var f=classesAfterNow();if(!f)return null;
+    var wk=monday(f.date),out=[];
+    for(var j=0;j<7;j++){
+      var dd=addDays(wk,j);
+      if(dd<f.date||!isClassDay(dd))continue;
+      var cs=iso(dd)===iso(f.date)?f.list:data.courses.filter(function(c){return c.day===dd.getDay();});
+      cs.slice().sort(function(a,b){return a.period-b.period;}).forEach(function(c){out.push({date:dd,course:c});});
+    }
+    return {date:f.date,items:out};
+  }
+  function lastRegular(){
+    var d=parse(sem().last);
+    for(var i=0;i<250;i++){var x=addDays(d,-i);if(iso(x)<sem().start)break;
+      if(isClassDay(x)&&data.courses.some(function(c){return c.day===x.getDay();}))return x;}
+    return null;
+  }
+
+  function isUrgent(x){return x.status!=='done'&&diff(x.due)<=3;}
+  function ddayText(x){
+    if(x.status==='done')return '완료';
+    var d=diff(x.due);
+    if(d===0)return 'D-day';
+    if(d>0)return 'D-'+d;
+    return (-d)+'일<small>지남</small>';
+  }
+  function sortTasks(list){
+    return list.slice().sort(function(a,b){
+      var ad=a.status==='done',bd=b.status==='done';
+      if(ad!==bd)return ad?1:-1;
+      return ad?(b.due<a.due?-1:1):(a.due<b.due?-1:a.due>b.due?1:0);
+    });
+  }
+  function sortCourses(list){return list.slice().sort(function(a,b){return a.day!==b.day?a.day-b.day:a.period-b.period;});}
+
+  function renderHeader(){
+    var t=today();
+    document.getElementById('todayText').textContent='오늘 '+md(t)+' '+DOW[t.getDay()]+'요일';
+    document.getElementById('semName').textContent=sem().name||'이번 학기';
+  }
+
+  function renderNext(){
+    var box=document.getElementById('next'),t=today(),s=sem();
+    var es=s.examStart?parse(s.examStart):null,ee=s.examEnd?parse(s.examEnd):null;
+    var examTxt=es&&ee?'보강·기말고사 '+fmt(es)+' ~ '+fmt(ee)+'.':'';
+    if(!data.courses.length){box.innerHTML='<div class="panel-head"><h2>다음 수업</h2></div><p style="margin:0">과목·과제 탭에서 과목을 추가하면 다음 수업이 여기에 나와요.</p>';return;}
+    var n=nextWeek();
+    if(n){
+      var m=modeOn(n.date),lr=lastRegular();
+      var rows=n.items.map(function(it){var p=per(it.course);
+        return '<li><b>'+fmt(it.date)+' '+p.label+'</b><span>'+esc(it.course.name)+'</span><small>'+p.start+' ~ '+p.end+'</small></li>';}).join('');
+      var label=weekNo(n.date)===weekNo(t)?'이번 주 수업':'다음 수업';
+      box.innerHTML='<div class="panel-head"><h2>'+label+'</h2></div><span class="next-mode m-'+m+'">'+MODE[m]+' 수업</span><ul>'+rows+'</ul>'+
+        '<p class="next-after">'+(lr?'마지막 정규 수업 '+fmt(lr)+'. ':'')+examTxt+'</p>';
+      return;
+    }
+    if(ee&&t<=ee){box.innerHTML='<div class="panel-head"><h2>정규 수업이 모두 끝났어요</h2></div><span class="next-mode m-exam">보강·기말고사 기간</span><p style="margin:0">'+examTxt+'</p>';return;}
+    box.innerHTML='<div class="panel-head"><h2>이번 학기가 끝났어요</h2></div><p style="margin:0">학기 설정에서 다음 학기 날짜를 넣으면 다시 쓸 수 있어요.</p>';
+  }
+
+  function renderSoon(){
+    var left=data.tasks.filter(function(x){return x.status!=='done';});
+    var el=document.getElementById('summary');
+    if(!left.length)el.textContent=data.tasks.length?'남은 과제가 없어요. 모두 제출했어요.':'등록한 과제가 없어요.';
+    else{
+      var over=left.filter(function(x){return diff(x.due)<0;}).length;
+      el.innerHTML='제출할 과제 <strong>'+left.length+'개</strong>'+(over?', 그중 마감 지난 과제 '+over+'개':'');
+    }
+    var list=sortTasks(left).slice(0,4);
+    document.getElementById('soon').innerHTML=list.map(function(x){var c=courseOf(x.courseId);
+      return '<li class="'+(isUrgent(x)?'urgent':'')+'"><a href="#courses"><span class="dday">'+ddayText(x)+'</span><span><span class="c">'+esc(c?c.name:'')+'</span><span class="t">'+esc(x.title)+'</span><span class="c">'+fmt(parse(x.due))+' / '+esc(x.method)+'</span></span></a></li>';}).join('');
+  }
+
+  function dayLabel(ds){
+    var same=ds.every(function(d){return d.getMonth()===ds[0].getMonth();});
+    return same?(ds[0].getMonth()+1)+'월 '+ds.map(function(d){return d.getDate();}).join('·')+'일':ds.map(function(d){return (d.getMonth()+1)+'/'+d.getDate();}).join('·');
+  }
+  function renderWeeks(){
+    var s=sem(),t=today(),last=parse(s.last);
+    var days=[];data.courses.forEach(function(c){if(days.indexOf(c.day)<0)days.push(c.day);});days.sort();
+    if(!days.length)days=[2,3];
+    var out='',n=0,examDone=false,lo=0,ln=0;
+    for(var wk=monday(parse(s.start));wk<=last;wk=addDays(wk,7)){
+      var ds=days.map(function(dy){return addDays(wk,(dy+6)%7);}).filter(inRange);
+      if(!ds.length)continue;
+      var reg=ds.filter(function(d){return !inExam(d);});
+      if(!reg.length){
+        if(!examDone&&s.examStart&&s.examEnd){
+          examDone=true;
+          var ep=parse(s.examEnd)<t?' past':(t>=parse(s.examStart)?' now':'');
+          out+='<div class="wk m-exam'+ep+'"><span class="n">'+(ep===' now'?'지금':'학기 마무리')+'</span><span class="d">'+fmt(parse(s.examStart))+' ~ '+fmt(parse(s.examEnd))+'</span><span class="m">보강·기말고사</span></div>';
+        }
+        continue;
+      }
+      n++;
+      if(reg.every(inMid)){var mNow=weekNo(t)===weekNo(reg[0]),mPast=!mNow&&addDays(wk,6)<t;
+        out+='<div class="wk m-mid'+(mPast?' past':'')+(mNow?' now':'')+'"><span class="n">'+(mNow?'이번 주':n+'주')+'</span><span class="d">'+fmt(parse(sem().midStart))+' ~ '+fmt(parse(sem().midEnd))+'</span><span class="m">중간고사</span></div>';continue;}
+      var o=ov(reg[0]),m=o==='off'?'rest':modeOn(reg[0]);
+      var isNow=weekNo(t)===weekNo(reg[0]),isPast=reg.every(function(d){return d<t;});
+      if(!isPast&&!isNow){if(m==='offline')lo++;else if(m==='online')ln++;}
+      var label=m==='rest'?'휴강':MODE[m];
+      out+='<button type="button" class="wk m-'+m+(isPast?' past':'')+(isNow&&!isPast?' now':'')+'" data-week="'+wkKey(reg[0])+'" title="눌러서 이 주만 바꾸기">'+
+        '<span class="n">'+(isNow?'이번 주':n+'주')+(o?' <span class="chg">변경</span>':'')+'</span><span class="d">'+dayLabel(reg)+'</span><span class="m">'+label+'</span></button>';
+    }
+    document.getElementById('weeks').innerHTML=out;
+    document.getElementById('weeksNote').textContent=(lo+ln?'남은 정규 수업 대면 '+lo+'주, 온라인 '+ln+'주. ':'')+'학교 사정으로 바뀐 주는 칸을 눌러 바꿀 수 있어요 (누를 때마다 반대 방식, 휴강, 원래대로).';
+  }
+
+  function courseNext(c){var f=classesAfterNow(function(x){return x.id===c.id;});return f?f.date:null;}
+  function taskRow(x){
+    return '<li class="task s-'+x.status+(isUrgent(x)?' urgent':'')+'">'+
+      '<div class="dday">'+ddayText(x)+'</div>'+
+      '<div><div class="tt">'+esc(x.title)+'</div><div class="tm">'+fmt(parse(x.due))+' 마감 / '+esc(x.method)+'</div></div>'+
+      '<button class="status-btn" data-cycle="'+x.id+'" title="눌러서 다음 단계로 바꾸기">'+STATUS[x.status]+'</button>'+
+      '<button class="del'+(pendingDelete===x.id?' confirm':'')+'" data-del="'+x.id+'">'+(pendingDelete===x.id?'한 번 더 누르면 삭제':'삭제')+'</button></li>';
+  }
+  function renderCourses(){
+    var box=document.getElementById('courses');
+    if(!data.courses.length){box.innerHTML='<div class="empty">아래의 ‘과목 추가하기’를 눌러 첫 과목을 등록해 보세요.</div>';return;}
+    var ee=sem().examEnd?parse(sem().examEnd):null;
+    box.innerHTML=sortCourses(data.courses).map(function(c){
+      var p=per(c),nd=courseNext(c);
+      var badge=nd?'<span class="mode m-'+modeOn(nd)+'">다음 수업 '+MODE[modeOn(nd)]+'</span>':(ee&&today()<=ee?'<span class="mode m-exam">보강·기말 기간</span>':'<span class="mode m-end">수업 종료</span>');
+      var tasks=sortTasks(data.tasks.filter(function(x){return x.courseId===c.id;}));
+      var left=tasks.filter(function(x){return x.status!=='done';}).length;
+      var state=!tasks.length?'<p class="task-state none">과제 없음</p>':left?'<p class="task-state has">남은 과제 '+left+'개</p>':'<p class="task-state ok">과제 모두 제출 완료</p>';
+      return '<article class="course"><div class="c-head"><div><h3>'+esc(c.name)+'</h3><p class="prof">'+esc(c.prof)+'</p></div>'+badge+'</div>'+
+        '<p class="when">매주 <b>'+DOW[c.day]+'요일 '+p.label+'</b> <span>'+p.start+' ~ '+p.end+(nd?' / 다음 수업 '+fmt(nd):'')+'</span></p>'+
+        '<div class="task-box">'+state+(tasks.length?'<ul class="tasks">'+tasks.map(taskRow).join('')+'</ul>':'')+
+        '<div class="c-foot"><details class="add-task"><summary>+ 과제 추가</summary>'+
+        '<form class="mini" data-course="'+c.id+'" novalidate>'+
+        '<label class="tt-in">과제명<input name="title" autocomplete="off"></label>'+
+        '<label>마감일<input name="due" type="date"></label>'+
+        '<label>제출 방법<select name="method"><option>이메일 (워드+PDF)</option><option>이메일</option><option>이메일 (녹음 파일)</option><option>온라인 제출</option><option>웹 주소 제출</option><option>수업 중 발표</option><option>출력물 제출</option></select></label>'+
+        '<button type="submit" class="btn-main">추가</button></form></details>'+
+        '<button class="del'+(pendingDelete===c.id?' confirm':'')+'" data-delcourse="'+c.id+'">'+(pendingDelete===c.id?'한 번 더 누르면 과목 삭제':'과목 삭제')+'</button>'+
+        '</div></div></article>';
+    }).join('');
+  }
+
+  function fillForms(){
+    var s=sem(),f=document.getElementById('semForm');
+    f.name.value=s.name;f.start.value=s.start;f.last.value=s.last;f.first.value=s.first;f.alt.value=s.alt?'1':'0';f.midStart.value=s.midStart||'';f.midEnd.value=s.midEnd||'';f.examStart.value=s.examStart||'';f.examEnd.value=s.examEnd||'';
+    var pf=document.getElementById('periodForm');
+    pf.s1.value=data.periods[1].start;pf.e1.value=data.periods[1].end;pf.s2.value=data.periods[2].start;pf.e2.value=data.periods[2].end;
+    document.getElementById('periodSelect').innerHTML=[1,2].map(function(k){return '<option value="'+k+'">'+k+'교시 ('+data.periods[k].start+' ~ '+data.periods[k].end+')</option>';}).join('');
+  }
+
+  function render(){renderHeader();renderNext();renderSoon();renderWeeks();renderCourses();}
+
+  var VIEWS=['home','courses','setup'];
+  function show(v){
+    if(VIEWS.indexOf(v)<0)v='home';
+    document.querySelectorAll('[data-view]').forEach(function(sec){sec.hidden=sec.dataset.view!==v;});
+    document.querySelectorAll('[data-tab]').forEach(function(a){if(a.dataset.tab===v)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
+    window.scrollTo(0,0);
+  }
+  window.addEventListener('hashchange',function(){show(location.hash.slice(1));});
+
+  function armDelete(id){pendingDelete=id;renderCourses();clearTimeout(deleteTimer);deleteTimer=setTimeout(function(){pendingDelete=null;renderCourses();},3000);}
+  function confirmBtn(b,label,action){
+    if(b.dataset.armed){action();delete b.dataset.armed;b.classList.remove('confirm');b.textContent=label;return;}
+    b.dataset.armed='1';b.classList.add('confirm');b.textContent='한 번 더 누르면 실행';
+    setTimeout(function(){delete b.dataset.armed;b.classList.remove('confirm');b.textContent=label;},3000);
+  }
+
+  document.addEventListener('click',function(e){
+    var b=e.target.closest('button');if(!b)return;
+    if(b.dataset.week){
+      var k=b.dataset.week,o=data.overrides[k],base=baseMode(parse(k));
+      if(!o)data.overrides[k]=other(base);else if(o!=='off')data.overrides[k]='off';else delete data.overrides[k];
+      save();
+    }else if(b.dataset.cycle){
+      var x=data.tasks.find(function(t){return t.id===b.dataset.cycle;});x.status=NEXT[x.status];save();
+    }else if(b.dataset.del){
+      var id=b.dataset.del;
+      if(pendingDelete===id){data.tasks=data.tasks.filter(function(t){return t.id!==id;});pendingDelete=null;clearTimeout(deleteTimer);save();}else armDelete(id);
+    }else if(b.dataset.delcourse){
+      var cid=b.dataset.delcourse;
+      if(pendingDelete===cid){data.courses=data.courses.filter(function(c){return c.id!==cid;});data.tasks=data.tasks.filter(function(t){return t.courseId!==cid;});pendingDelete=null;clearTimeout(deleteTimer);save();}else armDelete(cid);
+    }else if(b.id==='resetAll'){
+      confirmBtn(b,'과목·과제 모두 지우기',function(){data.courses=[];data.tasks=[];data.overrides={};save();});
+    }else if(b.id==='resetSample'){
+      confirmBtn(b,'처음 예시로 되돌리기',function(){data=samples();save();fillForms();});
+    }
+  });
+
+  document.addEventListener('submit',function(e){
+    var f=e.target;e.preventDefault();
+    function msg(id,t,err){var m=document.getElementById(id);m.textContent=t;m.classList.toggle('err',!!err);}
+    if(f.id==='courseForm'){
+      var n=f.name.value.trim();
+      if(!n){msg('courseMsg','과목명을 입력해 주세요.',true);return;}
+      data.courses.push({id:uid(),name:n,prof:f.prof.value.trim(),day:Number(f.day.value),period:Number(f.period.value)});
+      f.name.value='';f.prof.value='';msg('courseMsg','과목을 추가했어요.');save();
+    }else if(f.id==='semForm'){
+      if(!f.start.value||!f.last.value||f.start.value>f.last.value){msg('semMsg','개강일과 마지막 수업일을 확인해 주세요.',true);return;}
+      data.semester={name:f.name.value.trim()||'이번 학기',start:f.start.value,last:f.last.value,first:f.first.value,alt:f.alt.value==='1',midStart:f.midStart.value,midEnd:f.midEnd.value,examStart:f.examStart.value,examEnd:f.examEnd.value};
+      msg('semMsg','학기를 저장했어요.');save();
+    }else if(f.id==='periodForm'){
+      if(!f.s1.value||!f.e1.value||!f.s2.value||!f.e2.value){msg('periodMsg','네 칸을 모두 입력해 주세요.',true);return;}
+      data.periods={1:{start:f.s1.value,end:f.e1.value},2:{start:f.s2.value,end:f.e2.value}};
+      msg('periodMsg','교시 시간을 저장했어요.');save();fillForms();
+    }else if(f.dataset.course){
+      var t=f.title.value.trim(),d=f.due.value;
+      if(!t||!d){f.title.focus();f.title.placeholder='과제명과 마감일을 입력해 주세요';return;}
+      data.tasks.push({id:uid(),courseId:f.dataset.course,title:t,due:d,method:f.method.value,status:'todo'});save();
+    }
+  });
+
+  fillForms();
+  render();
+  show(location.hash.slice(1));
+})();
+</script>
+</body>
+</html>
